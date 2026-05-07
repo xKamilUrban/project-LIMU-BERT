@@ -1,0 +1,16 @@
+firmware/.pio/
+firmware/.vscode/
+firmware/*.gcc
+firmware/*.bak
+
+**/__pycache__/
+**/.venv/
+**/venv/
+**/.ipynb_checkpoints/
+*.pyc
+
+data/*.csv
+!data/sample_walking.csv
+
+.DS_Store
+Thumbs.db
