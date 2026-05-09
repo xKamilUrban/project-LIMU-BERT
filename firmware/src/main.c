@@ -87,9 +87,9 @@ void calibrate_mpu6050(i2c_master_dev_handle_t dev_handle, float offset_acc[], f
     offset_acc[1] = (float)(sum_acc[1] / samples) / 4096.0;
     offset_acc[2] = ((float)(sum_acc[2] / samples) / 4096.0) - 1.0;
 
-    offset_gyro[0] = (float)(sum_gyro[0] / samples) / 65.5;
-    offset_gyro[1] = (float)(sum_gyro[1] / samples) / 65.5;
-    offset_gyro[2] = (float)(sum_gyro[2] / samples) / 65.5;
+    offset_gyro[0] = (float)(sum_gyro[0] / samples) / 32.8;
+    offset_gyro[1] = (float)(sum_gyro[1] / samples) / 32.8;
+    offset_gyro[2] = (float)(sum_gyro[2] / samples) / 32.8;
 }
 
 void app_main(void)
@@ -117,8 +117,8 @@ void app_main(void)
 
     ESP_ERROR_CHECK(mpu6050_write_byte(dev_handle, MPU6050_PWR_MGMT_1, 0x01));
 
-    //+-500 deg/s
-    ESP_ERROR_CHECK(mpu6050_write_byte(dev_handle, MPU6050_GYRO_CONFIG , 0x08));
+    //+-1000 deg/s
+    ESP_ERROR_CHECK(mpu6050_write_byte(dev_handle, MPU6050_GYRO_CONFIG , 0x10));
 
     //+-8g
     ESP_ERROR_CHECK(mpu6050_write_byte(dev_handle, MPU6050_ACCEL_CONFIG , 0x10));
@@ -148,14 +148,16 @@ void app_main(void)
         int16_t gy = (read_data[10] << 8) | read_data[11];
         int16_t gz = (read_data[12] << 8) | read_data[13];
         
+        uint32_t current_time_ms = pdTICKS_TO_MS(xTaskGetTickCount());
 
-        printf("%.4f,%.4f,%.4f,%.4f,%.4f,%.4f\n", 
+        printf("%lu,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f\n",
+            current_time_ms, 
             ((float)ax/4096.0) - offset_acc[0], 
             ((float)ay/4096.0) - offset_acc[1], 
             ((float)az/4096.0) - offset_acc[2],
-            ((float)gx/65.5) - offset_gyro[0], 
-            ((float)gy/65.5) - offset_gyro[1], 
-            ((float)gz/65.5) - offset_gyro[2]);
+            ((float)gx/32.8) - offset_gyro[0], 
+            ((float)gy/32.8) - offset_gyro[1], 
+            ((float)gz/32.8) - offset_gyro[2]);
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
 }
