@@ -1,7 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-file_path = "../data/running_20260509_030855.csv"
+file_path = "../data/running_20260522_182124.csv"
 df = pd.read_csv(file_path)
 
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)

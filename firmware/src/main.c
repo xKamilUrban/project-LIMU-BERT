@@ -158,10 +158,10 @@ void mpu_data_task(void *pvParameters){
     //ustawienie DLPF na 42Hz
     ESP_ERROR_CHECK(mpu6050_write_byte(MPU6050_DLPF_CONFIG, 0x03));
     //Ustalamy stala czestotliwosc probkowania 20ms = 50Hz
-    ESP_ERROR_CHECK(mpu6050_write_byte(MPU6050_SMPRT_DIV, 9));
+    ESP_ERROR_CHECK(mpu6050_write_byte(MPU6050_SMPRT_DIV, 19));
 
     TickType_t xLastWakeTime = xTaskGetTickCount();
-    const TickType_t xFrequency = pdMS_TO_TICKS(10);
+    const TickType_t xFrequency = pdMS_TO_TICKS(20);
 
     int16_t offset_acc[3] = {0};
     int16_t offset_gyro[3] = {0};
