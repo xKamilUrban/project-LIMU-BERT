@@ -1,3 +1,5 @@
+.vscode/
+
 firmware/.pio/
 firmware/.vscode/
 firmware/*.gcc
