@@ -1,4 +1,5 @@
 #include "bluetooth.h"
+#include "config.h"
 #include "esp_log.h"
 #include "esp_bt.h"
 #include "esp_bt_main.h"
@@ -34,6 +35,9 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param){
         ESP_LOGI(SPP_TAG, "ESP_SPP_CLOSE_EVT status:%d handle:%"PRIu32" close_by_remote:%d", param->close.status,
                  param->close.handle, param->close.async);
         current_spp_handle = 0;
+        current_mode = MODE_NONE;
+        esp_wifi_start();
+        esp_wifi_connect();
         break;
     case ESP_SPP_START_EVT:
         if (param->start.status == ESP_SPP_SUCCESS) {
@@ -54,6 +58,10 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param){
     case ESP_SPP_SRV_OPEN_EVT:
         ESP_LOGI(SPP_TAG, "ESP_SPP_SRV_OPEN_EVT status:%d handle:%"PRIu32"", param->srv_open.status, param->srv_open.handle);
         current_spp_handle = param->srv_open.handle;
+        if (current_mode == MODE_NONE) {
+            current_mode = MODE_BLUETOOTH;
+            esp_wifi_stop();
+        }
         break;
     default:
         break;

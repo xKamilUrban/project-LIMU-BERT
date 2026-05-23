@@ -11,9 +11,12 @@ typedef struct {
 } imu_data_t;
 
 typedef enum {
+    MODE_NONE,
     MODE_BLUETOOTH,
-    MODE_MQTT
+    MODE_WIFI
 } app_mode_t;
+
+volatile app_mode_t current_mode = MODE_NONE;
 
 extern QueueHandle_t imu_queue;
 extern app_mode_t current_mode;
