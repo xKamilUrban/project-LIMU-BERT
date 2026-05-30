@@ -1,13 +1,15 @@
 #include "mpu6050.h"
 #include "config.h"
+#include "mqtt.h"
+#include "mqtt_client.h"
 #include "driver/i2c_master.h"
 #include "esp_log.h"
 #include "esp_spp_api.h"
 #include "bluetooth.h"
+#include "driver/gpio.h"
 
 static i2c_master_bus_handle_t bus_handle;
 static i2c_master_dev_handle_t dev_handle;
-
 
 static esp_err_t i2c_master_init(void){
     i2c_master_bus_config_t bus_config = {
@@ -91,9 +93,20 @@ void mpu_data_task(void *pvParameters){
 
     uint8_t read_data[14];
     uint8_t tx_buffer[16];
+
+    static bool stop_sent = false;
     
     while (1)
     {
+        if (gpio_get_level(GPIO_NUM_0) == 0) {
+            if (!stop_sent) {
+                mqtt_send_stop_signal(); 
+                stop_sent = true;
+            }
+        } else {
+            stop_sent = false;
+        }
+
         if (mpu6050_read(MPU6050_ACCEL_X_ADDR, read_data, 14) == ESP_OK){
             int16_t raw_ax = (int16_t)((read_data[0] << 8) | read_data[1]);
             int16_t raw_ay = (int16_t)((read_data[2] << 8) | read_data[3]);
@@ -131,9 +144,14 @@ void mpu_data_task(void *pvParameters){
 
             memcpy(tx_buffer, &imu_data, sizeof(imu_data_t));
 
-            if (bluetooth_is_ready()) {
-                esp_spp_write(bluetooth_get_handle(), 16, tx_buffer);
+            if(current_mode == MODE_BLUETOOTH){
+                if (bluetooth_is_ready()) {
+                    esp_spp_write(bluetooth_get_handle(), 16, tx_buffer);
+                }
+            }else if(current_mode == MODE_WIFI){
+                mqtt_publish(&imu_data);
             }
+
         }
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }

@@ -8,8 +8,8 @@
 #include "freertos/event_groups.h"
 
 static const char *TAG = "wifi";
-#define WIFI_SSID "twoja_siec"
-#define WIFI_PASS "twoje_haslo"
+#define WIFI_SSID "realme 14 5G n4p4"
+#define WIFI_PASS "AsdAsd123"
 
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT      BIT1
@@ -35,14 +35,12 @@ static void wifi_event_handler(void *arg, esp_event_base_t base,
         }
     } else if (base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         s_retry_num = 0;
-        current_mode = MODE_WIFI;
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
         ESP_LOGI(TAG, "WiFi connected");
     }
 }
 
-void wifi_init_sta(void)
-{
+bool wifi_init_sta(void){
     s_wifi_event_group = xEventGroupCreate();
 
     esp_netif_create_default_wifi_sta();
@@ -61,7 +59,6 @@ void wifi_init_sta(void)
         .sta = {
             .ssid = WIFI_SSID,
             .password = WIFI_PASS,
-            .threshold.authmode = WIFI_AUTH_WPA2_PSK,
         },
     };
 
@@ -75,7 +72,9 @@ void wifi_init_sta(void)
 
     if (bits & WIFI_CONNECTED_BIT) {
         ESP_LOGI(TAG, "connected to SSID: %s", WIFI_SSID);
+        return true;
     } else if (bits & WIFI_FAIL_BIT) {
         ESP_LOGE(TAG, "failed to connect to SSID: %s", WIFI_SSID);
     }
+    return false;
 }

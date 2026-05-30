@@ -1,5 +1,6 @@
 #include "bluetooth.h"
 #include "config.h"
+#include "esp_wifi.h"
 #include "esp_log.h"
 #include "esp_bt.h"
 #include "esp_bt_main.h"
@@ -26,7 +27,7 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param){
     case ESP_SPP_INIT_EVT:
         if (param->init.status == ESP_SPP_SUCCESS) {
             ESP_LOGI(SPP_TAG, "ESP_SPP_INIT_EVT");
-            esp_spp_start_srv(ESP_SPP_SEC_AUTHENTICATE, ESP_SPP_ROLE_SLAVE, 0, SPP_SERVER_NAME);
+            esp_spp_start_srv(ESP_SPP_SEC_NONE, ESP_SPP_ROLE_SLAVE, 0, SPP_SERVER_NAME);
         } else {
             ESP_LOGE(SPP_TAG, "ESP_SPP_INIT_EVT status:%d", param->init.status);
         }
@@ -37,14 +38,12 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param){
         current_spp_handle = 0;
         current_mode = MODE_NONE;
         esp_wifi_start();
-        esp_wifi_connect();
         break;
     case ESP_SPP_START_EVT:
         if (param->start.status == ESP_SPP_SUCCESS) {
             ESP_LOGI(SPP_TAG, "ESP_SPP_START_EVT handle:%"PRIu32" sec_id:%d scn:%d", param->start.handle, param->start.sec_id,
                      param->start.scn);
             esp_bt_gap_set_device_name(DEVICE_NAME);
-            esp_bt_gap_set_scan_mode(ESP_BT_CONNECTABLE, ESP_BT_GENERAL_DISCOVERABLE);
         } else {
             ESP_LOGE(SPP_TAG, "ESP_SPP_START_EVT status:%d", param->start.status);
         }

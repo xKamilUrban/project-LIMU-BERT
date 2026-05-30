@@ -1,2 +1,4 @@
 #pragma once
-void wifi_init_sta(void);
+#include <stdbool.h>
+
+bool wifi_init_sta(void);

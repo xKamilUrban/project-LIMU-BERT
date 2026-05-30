@@ -1,8 +1,11 @@
 import serial
 import struct
+import paho.mqtt.client as mqtt
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from collections import deque
+
+
 
 PORT = '/dev/rfcomm0'
 BAUD = 115200
@@ -15,12 +18,12 @@ gx_d = deque([0]*WINDOW_SIZE, maxlen=WINDOW_SIZE)
 gy_d = deque([0]*WINDOW_SIZE, maxlen=WINDOW_SIZE)
 gz_d = deque([0]*WINDOW_SIZE, maxlen=WINDOW_SIZE)
 
+ser = None
 try:
     ser = serial.Serial(PORT, BAUD, timeout=0.1)
     print(f"connected, PORT: {PORT}")
 except Exception as e:
     print(f"Error: {e}")
-    exit()
 
 fig, (ax_top, ax_bot) = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
 
@@ -40,30 +43,76 @@ ax_bot.set_ylabel("gyro [deg/s]")
 ax_bot.legend(loc='upper right')
 ax_bot.grid(True, alpha=0.3)
 
-def update(frame):
-    while ser.in_waiting >= 16:
-        try:
-            data = ser.read(16)
-            if len(data) == 16:
-                timestamp, ax, ay, az, gx, gy, gz = struct.unpack('<Ihhhhhh', data)
 
-                ax_d.append(ax / 4096.0)
-                ay_d.append(ay / 4096.0)
-                az_d.append(az / 4096.0)
-                gx_d.append(gx / 32.8)
-                gy_d.append(gy / 32.8)
-                gz_d.append(gz / 32.8)
-        except:
-            continue
+bt_buffer = bytearray()
+PACKET_SIZE = 16
+
+def process_data(data):
+    if len(data) == PACKET_SIZE:
+        try:
+            timestamp, ax, ay, az, gx, gy, gz = struct.unpack('<Ihhhhhh', data)
+            ax_d.append(ax / 4096.0)
+            ay_d.append(ay / 4096.0)
+            az_d.append(az / 4096.0)
+            gx_d.append(gx / 32.8)
+            gy_d.append(gy / 32.8)
+            gz_d.append(gz / 32.8)
+        except struct.error:
+            pass
+
+
+
+def on_message(client, userdata, msg):
+    data = msg.payload
+    for i in range(0, len(data), PACKET_SIZE):
+        chunk = data[i:i+PACKET_SIZE]
+        if len(chunk) == PACKET_SIZE:
+            process_data(chunk)
+
+
+mqtt_client = mqtt.Client()
+mqtt_client.on_message = on_message
+try:
+    mqtt_client.connect("broker.emqx.io", 1883, keepalive=60)
+    mqtt_client.subscribe("/imu/data", qos=1)
+    mqtt_client.loop_start()
+    print("MQTT połączone")
+except Exception as e:
+    print(f"MQTT niedostępne: {e}")
+
+
+def update(frame):
+    global bt_buffer, ser
+    if ser is not None:
+        try:
+            waiting = ser.in_waiting
+            if waiting > 0:
+                bt_buffer.extend(ser.read(waiting))
+            while len(bt_buffer) >= PACKET_SIZE:
+                process_data(bytes(bt_buffer[:PACKET_SIZE]))
+                bt_buffer = bt_buffer[PACKET_SIZE:]
+        except OSError:
+            print("BT rozłączone")
+            try:
+                ser.close()
+            except:
+                pass
+            ser = None
+        except Exception:
+            pass
 
     line_ax.set_ydata(ax_d); line_ay.set_ydata(ay_d); line_az.set_ydata(az_d)
     line_gx.set_ydata(gx_d); line_gy.set_ydata(gy_d); line_gz.set_ydata(gz_d)
-
     return line_ax, line_ay, line_az, line_gx, line_gy, line_gz
+    
+
 
 ani = FuncAnimation(fig, update, interval=10, blit=True, cache_frame_data=False)
 
 plt.tight_layout()
-plt.show()
-
-ser.close()
+try:
+    plt.show()
+finally:
+    if ser is not None:
+        ser.close()
+    mqtt_client.loop_stop()

@@ -16,7 +16,5 @@ typedef enum {
     MODE_WIFI
 } app_mode_t;
 
-volatile app_mode_t current_mode = MODE_NONE;
-
+extern volatile app_mode_t current_mode;
 extern QueueHandle_t imu_queue;
-extern app_mode_t current_mode;
