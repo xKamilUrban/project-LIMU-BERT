@@ -48,5 +48,5 @@ void app_main(void)
         esp_bt_gap_set_scan_mode(ESP_BT_CONNECTABLE, ESP_BT_GENERAL_DISCOVERABLE);
     }
 
-    xTaskCreate(mpu_data_task, "mpu_task", 8192, NULL, 5, NULL);
+    xTaskCreatePinnedToCore(mpu_data_task, "mpu_task", 8192, NULL, 10, NULL, 1);
 }

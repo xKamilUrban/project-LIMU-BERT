@@ -61,7 +61,7 @@ void calibrate_mpu6050(int16_t offset_acc[], int16_t offset_gyro[]){
         sum_gyro[0] += (int16_t)((read_data[8] << 8) | read_data[9]);
         sum_gyro[1] += (int16_t)((read_data[10] << 8) | read_data[11]);
         sum_gyro[2] += (int16_t)((read_data[12] << 8) | read_data[13]);
-        vTaskDelay(pdMS_TO_TICKS(2));
+        vTaskDelay(pdMS_TO_TICKS(20));
     }
     offset_acc[0] = (int16_t)(sum_acc[0] / samples);
     offset_acc[1] = (int16_t)(sum_acc[1] / samples);
@@ -70,6 +70,9 @@ void calibrate_mpu6050(int16_t offset_acc[], int16_t offset_gyro[]){
     offset_gyro[0] = (int16_t)(sum_gyro[0] / samples);
     offset_gyro[1] = (int16_t)(sum_gyro[1] / samples);
     offset_gyro[2] = (int16_t)(sum_gyro[2] / samples);
+
+    ESP_LOGI("CALIB", "Accel offsets: X=%d, Y=%d, Z=%d", offset_acc[0], offset_acc[1], offset_acc[2]);
+    ESP_LOGI("CALIB", "Gyro offsets:  X=%d, Y=%d, Z=%d", offset_gyro[0], offset_gyro[1], offset_gyro[2]);
 }
 
 void mpu_data_task(void *pvParameters){
@@ -79,17 +82,17 @@ void mpu_data_task(void *pvParameters){
     //+-8g
     ESP_ERROR_CHECK(mpu6050_write_byte(MPU6050_ACCEL_CONFIG , 0x10));
     //konfiguracja filtra sprzetowego
-    //ustawienie DLPF na 42Hz
-    ESP_ERROR_CHECK(mpu6050_write_byte(MPU6050_DLPF_CONFIG, 0x03));
+    //ustawienie DLPF na 21Hz
+    ESP_ERROR_CHECK(mpu6050_write_byte(MPU6050_DLPF_CONFIG, 0x04));
     //Ustalamy stala czestotliwosc probkowania 20ms = 50Hz
     ESP_ERROR_CHECK(mpu6050_write_byte(MPU6050_SMPRT_DIV, 19));
 
     TickType_t xLastWakeTime = xTaskGetTickCount();
     const TickType_t xFrequency = pdMS_TO_TICKS(20);
 
-    int16_t offset_acc[3] = {0};
-    int16_t offset_gyro[3] = {0};
-    calibrate_mpu6050(offset_acc, offset_gyro);
+    int16_t offset_acc[3] = {-528, -18, 115};
+    int16_t offset_gyro[3] = {17, 33, -2};
+    //calibrate_mpu6050(offset_acc, offset_gyro);
 
     uint8_t read_data[14];
     uint8_t tx_buffer[16];

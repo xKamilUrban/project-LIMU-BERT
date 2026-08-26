@@ -8,6 +8,9 @@
 #include "freertos/event_groups.h"
 
 static const char *TAG = "wifi";
+// #define WIFI_SSID "iPhone (Izabela)"
+// #define WIFI_PASS "thetruepassword"
+
 #define WIFI_SSID "realme 14 5G n4p4"
 #define WIFI_PASS "AsdAsd123"
 
