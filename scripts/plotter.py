@@ -9,7 +9,7 @@ from collections import deque
 
 PORT = '/dev/rfcomm0'
 BAUD = 115200
-WINDOW_SIZE = 100
+WINDOW_SIZE = 150
 
 ax_d = deque([0]*WINDOW_SIZE, maxlen=WINDOW_SIZE)
 ay_d = deque([0]*WINDOW_SIZE, maxlen=WINDOW_SIZE)
@@ -73,7 +73,7 @@ def on_message(client, userdata, msg):
 mqtt_client = mqtt.Client()
 mqtt_client.on_message = on_message
 try:
-    mqtt_client.connect("broker.emqx.io", 1883, keepalive=60)
+    mqtt_client.connect("broker.emqx.io", 0, keepalive=60)
     mqtt_client.subscribe("/imu/data", qos=1)
     mqtt_client.loop_start()
     print("MQTT połączone")
@@ -107,7 +107,7 @@ def update(frame):
     
 
 
-ani = FuncAnimation(fig, update, interval=10, blit=True, cache_frame_data=False)
+ani = FuncAnimation(fig, update, interval=20, blit=True, cache_frame_data=False)
 
 plt.tight_layout()
 try:
