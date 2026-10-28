@@ -12,6 +12,7 @@ firmware/*.bak
 *.pyc
 
 data/*.csv
+data/*.bak
 !data/sample_walking.csv
 
 .DS_Store
